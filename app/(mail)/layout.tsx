@@ -1,50 +1,32 @@
-'use client';
-
-import { usePathname } from 'next/navigation';
+import { headers } from 'next/headers';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { redirect } from 'next/navigation';
 
 export default function MailLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const [unreadCount, setUnreadCount] = useState(0);
+  // Vérifier l'authentification côté serveur
+  const headersList = headers();
+  const cookieHeader = headersList.get('cookie');
 
-  useEffect(() => {
-    // Charger le nombre de notifications non lues
-    loadUnreadCount();
-  }, []);
-
-  const loadUnreadCount = async () => {
-    try {
-      const res = await fetch('/api/notifications?limit=100');
-      const data = await res.json();
-      const notifications = Array.isArray(data) ? data : data.notifications || [];
-
-      // Compter les notifications des dernières 24h
-      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-      type NotificationLike = { createdAt?: string | number };
-      const recent = (notifications as NotificationLike[]).filter((n) => {
-        const t = n?.createdAt ? new Date(n.createdAt).getTime() : 0;
-        return t > oneDayAgo;
-      });
-
-      setUnreadCount(recent.length);
-    } catch (error) {
-      console.error('Failed to load unread count:', error);
-    }
-  };
+  // Redirection si pas de session
+  if (!cookieHeader || !cookieHeader.includes('session=')) {
+    redirect('/login');
+  }
 
   const navItems = [
     { href: '/dashboard', label: '📊 Dashboard', icon: 'dashboard' },
     { href: '/send', label: '✉️ Envoyer', icon: 'send' },
     { href: '/history', label: '📜 Historique', icon: 'history' },
     { href: '/inbox', label: '📥 Boîte de réception', icon: 'inbox' },
-    { href: '/notifications', label: '📬 Notifications', icon: 'notifications', badge: unreadCount },
+    { href: '/notifications', label: '📬 Notifications', icon: 'notifications' },
     { href: '/settings', label: '⚙️ Paramètres', icon: 'settings' },
   ];
+
+  // Obtenir le pathname actuel côté serveur
+  const pathname = headersList.get('x-pathname') || '/dashboard';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -60,15 +42,14 @@ export default function MailLayout({
             
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">admin@acme.com</span>
-              <button
-                onClick={() => {
-                  document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                  window.location.href = '/login';
-                }}
-                className="text-sm text-red-600 hover:text-red-700"
-              >
-                Déconnexion
-              </button>
+              <form action="/api/auth/logout" method="POST">
+                <button
+                  type="submit"
+                  className="text-sm text-red-600 hover:text-red-700"
+                >
+                  Déconnexion
+                </button>
+              </form>
             </div>
           </div>
         </div>
@@ -79,7 +60,7 @@ export default function MailLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8 overflow-x-auto">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname.startsWith(item.href);
               return (
                 <Link
                   key={item.href}
@@ -91,11 +72,6 @@ export default function MailLayout({
                   }`}
                 >
                   <span>{item.label}</span>
-                  {item.badge && item.badge > 0 && (
-                    <span className="flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
-                      {item.badge > 99 ? '99+' : item.badge}
-                    </span>
-                  )}
                 </Link>
               );
             })}
