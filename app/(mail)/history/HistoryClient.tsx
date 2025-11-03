@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Message, Recipient } from '@prisma/client';
+import type { MessageWithRelations, RecipientWithRelations } from '@/types/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,9 +15,9 @@ type AttemptLike = {
 };
 
 export default function HistoryClient() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null);
+  const [selectedRecipient, setSelectedRecipient] = useState<any | null>(null);
 
   useEffect(() => {
     loadHistory();
@@ -111,7 +111,7 @@ export default function HistoryClient() {
                     </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-col gap-1">
-                              {(msg.recipients ?? []).map((r: Recipient) => (
+                              {(msg.recipients ?? []).map((r: any) => (
                                 <span
                                   key={r.id}
                                   className={`inline-flex text-xs px-2 py-1 rounded-full ${getStatusColor(r.sendStatus)}`}
@@ -122,7 +122,7 @@ export default function HistoryClient() {
                             </div>
                           </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {(msg.recipients ?? []).map((r: Recipient) => (
+                      {(msg.recipients ?? []).map((r: any) => (
                         <button
                           key={r.id}
                           onClick={() => loadRecipientDetails(r.id)}
