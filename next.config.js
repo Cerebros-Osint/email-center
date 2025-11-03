@@ -11,11 +11,6 @@ const nextConfig = {
     },
   },
   
-  // Environment variables exposed to browser
-  env: {
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  },
-
   // Security headers
   async headers() {
     return [
