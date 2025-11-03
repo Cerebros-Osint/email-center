@@ -3,6 +3,9 @@ import type { Redis as IORedisClient } from 'ioredis';
 import { Queue, QueueEvents } from 'bullmq';
 
 const redisUrl = process.env.REDIS_URL; // if not provided, we avoid creating real clients during build
+const redisTlsOptions = redisUrl?.startsWith('rediss://')
+  ? { tls: { rejectUnauthorized: false as const } }
+  : {};
 
 // Minimal stub interface for when Redis is unavailable (tests/build)
 type RedisStub = {
@@ -33,6 +36,7 @@ if (redisUrl) {
     // Next.js build / static data collection. Connection will be established
     // at runtime when needed.
     redis = new Redis(redisUrl, {
+      ...redisTlsOptions,
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
       lazyConnect: true,
@@ -79,6 +83,7 @@ export let connection: IORedisClient | null = null;
 if (redisUrl) {
   try {
     connection = new Redis(redisUrl, {
+      ...redisTlsOptions,
       maxRetriesPerRequest: null,
       lazyConnect: true,
       retryStrategy: () => null,
