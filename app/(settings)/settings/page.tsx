@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import type { SmtpAccount, Identity, OrgSettings } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('smtp');
   const [smtpAccounts, setSmtpAccounts] = useState<SmtpAccount[]>([]);

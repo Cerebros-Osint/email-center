@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import type { InboundMessage } from '@/types';
 import { sanitizeEmailHtml } from '@/lib/sanitize';
 
+export const dynamic = 'force-dynamic';
+
 export default function InboxPage() {
   const [messages, setMessages] = useState<InboundMessage[]>([]);
   const [loading, setLoading] = useState(true);

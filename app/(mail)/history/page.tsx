@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import type { Message, Recipient } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 type AttemptLike = {
   id: string;
   createdAt: string | number;

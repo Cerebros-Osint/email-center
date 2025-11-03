@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+export const dynamic = 'force-dynamic';
+
 interface Notification {
   id: string;
   type: 'opened' | 'clicked' | 'bounced' | 'unsubscribed' | 'failed';

@@ -13,6 +13,8 @@ interface PreflightResult {
   };
 }
 
+export const dynamic = 'force-dynamic';
+
 export default function SendPage() {
   const router = useRouter();
   const [identities, setIdentities] = useState<Identity[]>([]);
