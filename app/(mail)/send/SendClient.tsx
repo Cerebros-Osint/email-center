@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Identity } from '@/types';
@@ -11,9 +13,7 @@ interface PreflightResult {
   };
 }
 
-export const dynamic = 'force-dynamic';
-
-export default function SendPage() {
+export default function SendClient() {
   const router = useRouter();
   const [identities, setIdentities] = useState<Identity[]>([]);
   const [selectedIdentity, setSelectedIdentity] = useState('');
@@ -236,16 +236,16 @@ export default function SendPage() {
           </div>
 
           {/* Preflight Result */}
-          {(preflightResult as PreflightResult) && (
-            <div className="mt-6 border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Résultat Preflight</h3>
-              <div className={`p-4 rounded ${(preflightResult as PreflightResult).canSend ? 'bg-green-50' : 'bg-red-50'}`}>
-                <p className="font-medium">
-                  {(preflightResult as PreflightResult).canSend ? '✅ Prêt à envoyer' : '❌ Problèmes détectés'}
-                </p>
-                {(preflightResult as PreflightResult).recommendation && (() => {
-                  const rec = (preflightResult as PreflightResult).recommendation!;
-                  return (
+          {(preflightResult as PreflightResult) && (() => {
+            const rec = (preflightResult as PreflightResult).recommendation!;
+            return (
+              <div className="mt-6 border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Résultat Preflight</h3>
+                <div className={`p-4 rounded ${(preflightResult as PreflightResult).canSend ? 'bg-green-50' : 'bg-red-50'}`}>
+                  <p className="font-medium">
+                    {(preflightResult as PreflightResult).canSend ? '✅ Prêt à envoyer' : '❌ Problèmes détectés'}
+                  </p>
+                  {rec && (
                     <div className="mt-4 space-y-2">
                       <p className="text-sm font-medium">SMTP recommandé:</p>
                       <p className="text-sm">{rec.smtpProvider}</p>
@@ -254,11 +254,11 @@ export default function SendPage() {
                         <p className="text-sm mt-2">{rec.explanation}</p>
                       )}
                     </div>
-                  );
-                })()}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </div>

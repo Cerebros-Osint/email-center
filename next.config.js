@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone', // For Docker deployment
   eslint: {
     ignoreDuringBuilds: true,
   },
   experimental: {
+    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
     serverActions: {
       bodySizeLimit: '10mb',
     },
