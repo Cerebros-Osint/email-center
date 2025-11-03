@@ -108,26 +108,31 @@ model ProviderCapabilities {
 }
 
 model Identity {
-  id                   String  @id @default(uuid())
+  id                   String    @id @default(uuid())
   orgId                String
   displayName          String
   fromEmail            String
   defaultSmtpAccountId String?
-  org                  Org     @relation(fields: [orgId], references: [id])
+  createdAt            DateTime  @default(now())
+  org                  Org       @relation(fields: [orgId], references: [id])
+  messages             Message[]
 }
 
 model Message {
-  id           String        @id @default(uuid())
-  orgId        String
-  userId       String
-  identityId   String
-  subject      String
-  bodyHtml     String?
-  bodyText     String?
-  replyToToken String
-  status       MessageStatus
-  createdAt    DateTime      @default(now())
-  recipients   Recipient[]
+  id                String        @id @default(uuid())
+  orgId             String
+  userId            String
+  identityId        String
+  subject           String
+  bodyHtml          String?
+  bodyText          String?
+  replyToToken      String        @unique
+  customDisplayName String?
+  trackingEnabled   Boolean       @default(true)
+  status            MessageStatus
+  createdAt         DateTime      @default(now())
+  identity          Identity      @relation(fields: [identityId], references: [id])
+  recipients        Recipient[]
 }
 
 model Recipient {
@@ -138,10 +143,12 @@ model Recipient {
   mxRecordsJson      Json?
   lastMxCheckedAt    DateTime?
   routeSmtpAccountId String?
+  trackingId         String?         @unique
   sendStatus         RecipientStatus @default(pending)
   sentAt             DateTime?
   message            Message         @relation(fields: [messageId], references: [id])
   attempts           SendAttempt[]
+  trackingEvents     TrackingEvent[]
 }
 
 model SendAttempt {
@@ -159,6 +166,7 @@ model SendAttempt {
 model InboundMessage {
   id           String   @id @default(uuid())
   orgId        String
+  threadId     String?
   replyToToken String?
   fromEmail    String
   toEmail      String
@@ -197,23 +205,25 @@ model OrgSettings {
 }
 
 model DomainConfig {
-  id                  String       @id @default(uuid())
-  orgId               String
-  domain              String       @unique
-  dkimSelectorCurrent String?
-  dkimSelectorNext    String?
-  dkimRotateAt        DateTime?
-  dmarcPolicy         DmarcPolicy  @default(none)
-  dmarcPct            Int          @default(100)
-  aspf                AlignMode    @default(r)
-  adkim               AlignMode    @default(r)
-  ruaMailto           String?
-  ruaHttp             String?
-  rufMailto           String?
-  lastPublishedAt     DateTime?
-  dnsProvider         DnsProvider?
-  dnsZoneRef          String?
-  org                 Org          @relation(fields: [orgId], references: [id])
+  id                   String       @id @default(uuid())
+  orgId                String
+  domain               String       @unique
+  dkimSelectorCurrent  String?
+  dkimSelectorNext     String?
+  dkimRotateAt         DateTime?
+  dmarcPolicy          DmarcPolicy  @default(none)
+  dmarcPct             Int          @default(100)
+  aspf                 AlignMode    @default(r)
+  adkim                AlignMode    @default(r)
+  ruaMailto            String?
+  ruaHttp              String?
+  rufMailto            String?
+  lastPublishedAt      DateTime?
+  lastDmarcAdjustedAt  DateTime?
+  lastDnsCheckAt       DateTime?
+  dnsProvider          DnsProvider?
+  dnsZoneRef           String?
+  org                  Org          @relation(fields: [orgId], references: [id])
 }
 
 model DmarcAggregateReport {
@@ -242,4 +252,18 @@ model AuditLog {
   userAgent String?
   success   Boolean
   createdAt DateTime @default(now())
+}
+
+model TrackingEvent {
+  id          String    @id @default(uuid())
+  recipientId String
+  eventType   String
+  eventAt     DateTime  @default(now())
+  ip          String?
+  userAgent   String?
+  metadata    String?
+  recipient   Recipient @relation(fields: [recipientId], references: [id])
+
+  @@index([recipientId, eventType])
+  @@index([eventAt])
 }

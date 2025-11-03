@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { MessageWithRelations, RecipientWithRelations } from '@/types/api';
 
 export const dynamic = 'force-dynamic';
 

@@ -30,30 +30,42 @@ type RedisStub = {
 // Redis client for general use (either real client or a stub)
 export let redis: IORedisClient | RedisStub;
 
-if (redisUrl) {
+if (redisUrl && process.env.NODE_ENV !== 'test') {
   try {
-    // Use lazyConnect so the client does not attempt network connections during
-    // Next.js build / static data collection. Connection will be established
-    // at runtime when needed.
+    // Production: enable retry strategy for resilience
+    const retryStrategy = process.env.NODE_ENV === 'production'
+      ? (times: number) => {
+          if (times > 10) return null; // Give up after 10 retries
+          return Math.min(times * 200, 3000); // Exponential backoff, max 3s
+        }
+      : () => null; // Build/dev: no retry
+
     redis = new Redis(redisUrl, {
       ...redisTlsOptions,
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
-      lazyConnect: true,
-      // Avoid aggressive retry loops during build/test if server is not available
-      retryStrategy: () => null,
+      lazyConnect: false, // Connect immediately to fail-fast in production
+      retryStrategy,
     }) as IORedisClient;
 
-    // Prevent unhandled error events from crashing the build
-    redis.on('error', (_err: unknown) => {
-      // intentionally swallow during build/test
+    // Prevent unhandled error events from crashing the process
+    redis.on('error', (err: unknown) => {
+      console.error('[Redis] Connection error:', err);
     });
-  } catch {
+
+    // Log successful connection in production
+    if (process.env.NODE_ENV === 'production') {
+      redis.on('connect', () => {
+        console.log('[Redis] Connected successfully');
+      });
+    }
+  } catch (err) {
+    console.error('[Redis] Failed to initialize:', err);
     // If construction throws synchronously (rare), fallback to stub
     redis = createRedisStub();
   }
 } else {
-  // No REDIS_URL provided — use a safe no-op stub so builds/tests don't require Redis
+  // No REDIS_URL provided or test env — use a safe no-op stub
   redis = createRedisStub();
 }
 
@@ -80,16 +92,33 @@ function createRedisStub(): RedisStub {
 
 // Redis connection for BullMQ
 export let connection: IORedisClient | null = null;
-if (redisUrl) {
+if (redisUrl && process.env.NODE_ENV !== 'test') {
   try {
+    const retryStrategy = process.env.NODE_ENV === 'production'
+      ? (times: number) => {
+          if (times > 10) return null;
+          return Math.min(times * 200, 3000);
+        }
+      : () => null;
+
     connection = new Redis(redisUrl, {
       ...redisTlsOptions,
       maxRetriesPerRequest: null,
-      lazyConnect: true,
-      retryStrategy: () => null,
+      lazyConnect: false, // Immediate connection for fail-fast
+      retryStrategy,
     }) as IORedisClient;
-    connection.on('error', () => {});
-  } catch {
+    
+    connection.on('error', (err: unknown) => {
+      console.error('[Redis BullMQ] Connection error:', err);
+    });
+
+    if (process.env.NODE_ENV === 'production') {
+      connection.on('connect', () => {
+        console.log('[Redis BullMQ] Connected successfully');
+      });
+    }
+  } catch (err) {
+    console.error('[Redis BullMQ] Failed to initialize:', err);
     connection = null;
   }
 } else {

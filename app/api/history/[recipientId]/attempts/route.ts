@@ -33,21 +33,8 @@ export async function GET(
             },
           },
         },
-        sendAttempts: {
+        attempts: {
           orderBy: { createdAt: 'desc' },
-          include: {
-            smtpAccount: {
-              select: {
-                provider: true,
-                fromEmail: true,
-              },
-            },
-          },
-        },
-        smtpAccount: {
-          select: {
-            provider: true,
-          },
         },
       },
     });

@@ -107,7 +107,7 @@ export async function pollImap(orgId: string): Promise<number> {
             subject: parsed.subject || '',
             bodyText: parsed.text || '',
             bodyHtml: parsed.html ? sanitizeEmailHtml(parsed.html) : null,
-            rawSource: typeof rawSource === 'string' ? rawSource : (Buffer.isBuffer(rawSource) ? rawSource.toString('utf-8') : String(rawSource)),
+            rawSource: Buffer.isBuffer(rawSource) ? rawSource : (typeof rawSource === 'string' ? Buffer.from(rawSource, 'utf-8') : null),
             receivedAt,
           },
         });

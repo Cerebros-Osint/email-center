@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { SmtpAccount, Identity, OrgSettings, OrgRole } from '@prisma/client';
+import type { SmtpAccount, Identity, OrgSettings } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -411,9 +411,9 @@ export default function SettingsClient() {
                 <div key={identity.id} className="bg-white rounded-lg shadow p-6">
                   <h3 className="font-semibold text-lg">{identity.displayName}</h3>
                   <p className="text-sm text-gray-600 mt-1">{identity.fromEmail}</p>
-                  {identity.defaultSmtpAccount && (
+                  {identity.defaultSmtpAccountId && (
                     <p className="text-xs text-gray-500 mt-2">
-                      SMTP: {identity.defaultSmtpAccount.provider}
+                      SMTP: {identity.defaultSmtpAccountId.substring(0, 8)}...
                     </p>
                   )}
                 </div>
