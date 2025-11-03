@@ -48,7 +48,7 @@ if (redisUrl) {
     redis.on('error', (_err: unknown) => {
       // intentionally swallow during build/test
     });
-  } catch (e) {
+  } catch {
     // If construction throws synchronously (rare), fallback to stub
     redis = createRedisStub();
   }
@@ -89,7 +89,7 @@ if (redisUrl) {
       retryStrategy: () => null,
     }) as IORedisClient;
     connection.on('error', () => {});
-  } catch (e) {
+  } catch {
     connection = null;
   }
 } else {

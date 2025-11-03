@@ -22,7 +22,7 @@ export async function GET() {
     const dbRes = await withTimeout(prisma.$queryRaw`SELECT 1`);
     checks.services.database = dbRes ? 'healthy' : 'unhealthy';
     if (!dbRes) checks.status = 'degraded';
-  } catch (_e) {
+  } catch {
     checks.services.database = 'unhealthy';
     checks.status = 'degraded';
   }
@@ -32,7 +32,7 @@ export async function GET() {
     const redisRes = await withTimeout((redis && typeof redis.ping === 'function') ? redis.ping() : Promise.resolve('PONG'));
     checks.services.redis = redisRes ? 'healthy' : 'unhealthy';
     if (!redisRes) checks.status = 'degraded';
-  } catch (_e) {
+  } catch {
     checks.services.redis = 'unhealthy';
     checks.status = 'degraded';
   }

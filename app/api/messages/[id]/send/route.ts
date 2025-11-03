@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { queues } from '@/lib/redis';
 import { logger } from '@/lib/logger';
 import { withProtection } from '@/lib/middleware';
+import { Job } from 'bullmq';
 
 export async function POST(
   request: NextRequest,
@@ -69,7 +70,7 @@ export async function POST(
       )
     );
 
-  const validJobs = jobs.filter(Boolean) as any[];
+  const validJobs = jobs.filter(Boolean) as Job[];
 
     logger.info(
       { orgId: session.orgId, messageId: message.id, jobCount: validJobs.length },

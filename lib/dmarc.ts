@@ -35,7 +35,7 @@ export async function calculateDmarcKPIs(domain: string, orgId: string): Promise
   let reports: DmarcReportLike[] = [];
   try {
     // Some environments may not have dmarcAggregateReport model; guard access
-    function hasDmarcAggregateReport(client: typeof prisma): client is typeof prisma & { dmarcAggregateReport: { findMany: (opts: any) => Promise<DmarcReportLike[]> } } {
+    function hasDmarcAggregateReport(client: typeof prisma): client is typeof prisma & { dmarcAggregateReport: { findMany: (opts: unknown) => Promise<DmarcReportLike[]> } } {
       return Object.prototype.hasOwnProperty.call(client, 'dmarcAggregateReport');
     }
 
@@ -231,18 +231,18 @@ export async function publishDmarcRecord(
     aspf: (config.aspf as 'r' | 's') || 'r',
     adkim: (config.adkim as 'r' | 's') || 'r',
     ruaMailto: config.ruaMailto || undefined,
-    ruaHttp: (config as any)?.ruaHttp || undefined,
-    rufMailto: (config as any)?.rufMailto || (config as any)?.ruf || undefined,
+    ruaHttp: (config as Record<string, unknown>).ruaHttp as string | undefined,
+    rufMailto: ((config as Record<string, unknown>).rufMailto as string | undefined) || ((config as Record<string, unknown>).ruf as string | undefined) || undefined,
   });
   
   logger.info({ domain: config.domain, record }, 'Publishing DMARC record');
   
   // Route to appropriate DNS provider
     if (config.dnsProvider === 'route53') {
-    const zoneRef = (config as any)?.dnsZoneRef || (config as any)?.dnsProviderZoneId || null;
+    const zoneRef = ((config as Record<string, unknown>).dnsZoneRef as string | null) || ((config as Record<string, unknown>).dnsProviderZoneId as string | null) || null;
     return publishToRoute53(config.domain, record, zoneRef);
   } else if (config.dnsProvider === 'cloudflare') {
-    const zoneRef = (config as any)?.dnsZoneRef || (config as any)?.dnsProviderZoneId || null;
+    const zoneRef = ((config as Record<string, unknown>).dnsZoneRef as string | null) || ((config as Record<string, unknown>).dnsProviderZoneId as string | null) || null;
     return publishToCloudflare(config.domain, record, zoneRef);
   } else {
     // Manual mode - return instructions

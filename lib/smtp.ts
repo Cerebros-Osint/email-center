@@ -25,7 +25,7 @@ const transportPool = new LRUCache<string, Transporter>({
   dispose: (transporter: Transporter, _key: string) => {
     try {
       transporter.close();
-    } catch (e) {
+    } catch {
       // ignore
     }
   },

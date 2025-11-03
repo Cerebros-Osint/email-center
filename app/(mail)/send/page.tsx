@@ -4,6 +4,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Identity } from '@/types';
 
+interface PreflightResult {
+  canSend: boolean;
+  recommendation?: {
+    smtpProvider: string;
+    score: number;
+    explanation?: string;
+  };
+}
+
 export default function SendPage() {
   const router = useRouter();
   const [identities, setIdentities] = useState<Identity[]>([]);
@@ -12,7 +21,7 @@ export default function SendPage() {
   const [subject, setSubject] = useState('');
   const [bodyHtml, setBodyHtml] = useState('');
   const [loading, setLoading] = useState(false);
-  const [preflightResult, setPreflightResult] = useState<any>(null);
+  const [preflightResult, setPreflightResult] = useState<PreflightResult | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -83,7 +92,7 @@ export default function SendPage() {
       }
 
       setPreflightResult(data);
-    } catch (error) {
+    } catch {
       setError('Erreur réseau');
     }
   };
@@ -127,7 +136,7 @@ export default function SendPage() {
 
       alert(`✅ ${sendData.queued} message(s) en file d'attente`);
       router.push('/history');
-    } catch (error) {
+    } catch {
       setError('Erreur réseau');
     } finally {
       setLoading(false);
@@ -219,7 +228,7 @@ export default function SendPage() {
             </button>
             <button
               onClick={handleSend}
-              disabled={loading || !preflightResult?.canSend}
+              disabled={loading || !(preflightResult as PreflightResult)?.canSend}
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Envoi...' : '📧 Envoyer'}
@@ -227,23 +236,26 @@ export default function SendPage() {
           </div>
 
           {/* Preflight Result */}
-          {preflightResult && (
+          {(preflightResult as PreflightResult) && (
             <div className="mt-6 border-t pt-6">
               <h3 className="text-lg font-semibold mb-4">Résultat Preflight</h3>
-              <div className={`p-4 rounded ${preflightResult.canSend ? 'bg-green-50' : 'bg-red-50'}`}>
+              <div className={`p-4 rounded ${(preflightResult as PreflightResult).canSend ? 'bg-green-50' : 'bg-red-50'}`}>
                 <p className="font-medium">
-                  {preflightResult.canSend ? '✅ Prêt à envoyer' : '❌ Problèmes détectés'}
+                  {(preflightResult as PreflightResult).canSend ? '✅ Prêt à envoyer' : '❌ Problèmes détectés'}
                 </p>
-                {preflightResult.recommendation && (
-                  <div className="mt-4 space-y-2">
-                    <p className="text-sm font-medium">SMTP recommandé:</p>
-                    <p className="text-sm">{preflightResult.recommendation.smtpProvider}</p>
-                    <p className="text-xs text-gray-600">Score: {preflightResult.recommendation.score}/100</p>
-                    {preflightResult.recommendation.explanation && (
-                      <p className="text-sm mt-2">{preflightResult.recommendation.explanation}</p>
-                    )}
-                  </div>
-                )}
+                {(preflightResult as PreflightResult).recommendation && (() => {
+                  const rec = (preflightResult as PreflightResult).recommendation!;
+                  return (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm font-medium">SMTP recommandé:</p>
+                      <p className="text-sm">{rec.smtpProvider}</p>
+                      <p className="text-xs text-gray-600">Score: {rec.score}/100</p>
+                      {rec.explanation && (
+                        <p className="text-sm mt-2">{rec.explanation}</p>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}

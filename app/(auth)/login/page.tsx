@@ -31,7 +31,7 @@ export default function LoginPage() {
 
       // Redirect to dashboard
       router.push('/dashboard');
-    } catch (_err) {
+    } catch {
       setError('Erreur réseau');
     } finally {
       setLoading(false);

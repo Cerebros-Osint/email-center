@@ -190,7 +190,7 @@ export default function DashboardPage() {
         {/* Kill Switch Control */}
         {!stats?.killSwitch && (
           <div className="mt-6 bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Contrôles d'urgence</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Contrôles d&apos;urgence</h2>
             <button
               onClick={toggleKillSwitch}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"

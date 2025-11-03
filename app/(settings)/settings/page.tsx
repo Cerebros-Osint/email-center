@@ -66,7 +66,7 @@ export default function SettingsPage() {
         const data = await res.json();
         alert('❌ ' + (data.error?.message || 'Erreur'));
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erreur réseau');
     }
   };
@@ -83,7 +83,7 @@ export default function SettingsPage() {
       } else {
         alert('❌ ' + data.error);
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erreur réseau');
     }
   };
@@ -113,7 +113,7 @@ export default function SettingsPage() {
         const data = await res.json();
         alert('❌ ' + (data.error?.message || 'Erreur'));
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erreur réseau');
     }
   };
@@ -132,7 +132,7 @@ export default function SettingsPage() {
       } else {
         alert('❌ Erreur');
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erreur réseau');
     }
   };

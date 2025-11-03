@@ -54,14 +54,14 @@ export async function pollImap(orgId: string): Promise<number> {
     });
     
     for await (const msg of messages) {
+      const m = msg as { source?: string | Buffer; body?: string | Buffer; uid?: number };
       try {
-        const m = msg as { source?: string | Buffer; body?: string | Buffer; uid?: number };
         const rawSource = m.source ?? m.body ?? null;
 
         let parsed: ParsedMail;
         if (rawSource) {
           try {
-            parsed = await simpleParser(rawSource as any);
+            parsed = await simpleParser(rawSource as Buffer | string);
           } catch (err) {
             logger.error({ err, uid: m.uid }, 'Failed to parse message source');
             // Skip this message if parsing fails
@@ -90,8 +90,8 @@ export async function pollImap(orgId: string): Promise<number> {
           return field.value[0]?.address ?? '';
         };
 
-        const fromEmail = getFirstAddress(parsed.from as any);
-        const toEmail = getFirstAddress(parsed.to as any);
+        const fromEmail = getFirstAddress(parsed.from as { value?: Array<{ address?: string | null }> });
+        const toEmail = getFirstAddress(parsed.to as { value?: Array<{ address?: string | null }> });
 
   // Normalize received date
   const rawDate = parsed.date;
@@ -123,7 +123,7 @@ export async function pollImap(orgId: string): Promise<number> {
           'IMAP message processed'
         );
       } catch (error) {
-        logger.error({ error, uid: (msg as any).uid }, 'Failed to process IMAP message');
+        logger.error({ error, uid: m.uid }, 'Failed to process IMAP message');
       }
     }
     
@@ -142,7 +142,7 @@ function extractReplyToken(parsed: ParsedMail): string | null {
   const headers = parsed.headers;
 
   // Prefer Map-like headers (mailparser) with `.get()`
-  if (headers && typeof (headers as any).get === 'function') {
+  if (headers && typeof (headers as Map<string, unknown>).get === 'function') {
     const h = headers as Map<string, unknown>;
     const tokenHeader = h.get('x-reply-token');
     if (tokenHeader) return String(tokenHeader);

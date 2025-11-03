@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { smtpAccountUpdateSchema } from '@/lib/validator';
 import { encrypt } from '@/lib/crypto';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export async function PATCH(
   request: NextRequest,
@@ -70,7 +71,7 @@ export async function PATCH(
         id: params.id,
         orgId: session.orgId,
       },
-      data: prismaData as any,
+      data: prismaData as Prisma.SmtpAccountUpdateInput,
     });
     
     logger.info({ orgId: session.orgId, smtpAccountId: account.id }, 'SMTP account updated');
