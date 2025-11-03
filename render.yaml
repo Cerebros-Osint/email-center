@@ -1,0 +1,129 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Next.js
+.next
+out
+
+# Env files (use secrets instead)
+.env
+.env.local
+.env.production.local
+.env.development.local
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Documentation (not needed in container)
+*.md
+!README.md
+
+# Prisma
+prisma/dev.db
+prisma/*.db
+
+# TypeScript
+tsconfig.tsbuildinfo
+# Render Blueprint for Email Software
+# Deploy full stack: Web service + Workers + PostgreSQL + Redis
+
+services:
+  # Main Web Application
+  - type: web
+    name: email-software-web
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: email-software-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: email-software-redis
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  # Workers Service (BullMQ, IMAP, etc.)
+  - type: worker
+    name: email-software-workers
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm install && npx prisma generate
+    startCommand: npm run worker:all
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: email-software-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: email-software-redis
+          property: connectionString
+      - key: SESSION_SECRET
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: IMAP_HOST
+        sync: false
+      - key: IMAP_PORT
+        sync: false
+      - key: IMAP_USER
+        sync: false
+      - key: IMAP_PASS
+        sync: false
+      - key: REPLY_DOMAIN
+        sync: false
+    autoDeploy: true
+
+databases:
+  - name: email-software-db
+    databaseName: emailapp
+    user: emailapp
+    plan: starter
+    region: oregon
+    postgresMajorVersion: 15
+
+  - name: email-software-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: noeviction
+    ipAllowList: []

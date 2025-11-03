@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrgRole {
+  Owner
+  Admin
+  Member
+}
+
+enum MessageStatus {
+  draft
+  queued
+  sent
+  failed
+  paused
+}
+
+enum RecipientStatus {
+  pending
+  sent
+  failed
+  suppressed
+}
+
+enum AttemptResult {
+  ok
+  fail
+}
+
+enum DmarcPolicy {
+  none
+  quarantine
+  reject
+}
+
+enum AlignMode {
+  r
+  s
+}
+
+enum DnsProvider {
+  route53
+  cloudflare
+}
+
+model Org {
+  id            String         @id @default(uuid())
+  name          String
+  createdAt     DateTime       @default(now())
+  settings      OrgSettings?
+  users         OrgUser[]
+  smtpAccounts  SmtpAccount[]
+  identities    Identity[]
+  domainConfigs DomainConfig[]
+}
+
+model OrgUser {
+  id     String  @id @default(uuid())
+  orgId  String
+  userId String
+  role   OrgRole
+  org    Org     @relation(fields: [orgId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
+
+  @@unique([orgId, userId])
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  orgs         OrgUser[]
+}
+
+model SmtpAccount {
+  id              String                  @id @default(uuid())
+  orgId           String
+  provider        String
+  host            String
+  port            Int
+  username        String
+  passwordEnc     Bytes
+  fromEmail       String
+  rateLimitPerMin Int?
+  status          String                  @default("active")
+  createdAt       DateTime                @default(now())
+  org             Org                     @relation(fields: [orgId], references: [id])
+  capabilities    ProviderCapabilities?
+}
+
+model ProviderCapabilities {
+  id            String      @id @default(uuid())
+  smtpAccountId String      @unique
+  starttls      Boolean     @default(false)
+  size          Int?
+  pipelining    Boolean     @default(false)
+  eightBitMime  Boolean     @default(false)
+  latencyMs     Int?
+  lastTestAt    DateTime
+  smtpAccount   SmtpAccount @relation(fields: [smtpAccountId], references: [id])
+}
+
+model Identity {
+  id                   String  @id @default(uuid())
+  orgId                String
+  displayName          String
+  fromEmail            String
+  defaultSmtpAccountId String?
+  org                  Org     @relation(fields: [orgId], references: [id])
+}
+
+model Message {
+  id           String        @id @default(uuid())
+  orgId        String
+  userId       String
+  identityId   String
+  subject      String
+  bodyHtml     String?
+  bodyText     String?
+  replyToToken String
+  status       MessageStatus
+  createdAt    DateTime      @default(now())
+  recipients   Recipient[]
+}
+
+model Recipient {
+  id                 String          @id @default(uuid())
+  messageId          String
+  toEmail            String
+  mxDomain           String?
+  mxRecordsJson      Json?
+  lastMxCheckedAt    DateTime?
+  routeSmtpAccountId String?
+  sendStatus         RecipientStatus @default(pending)
+  sentAt             DateTime?
+  message            Message         @relation(fields: [messageId], references: [id])
+  attempts           SendAttempt[]
+}
+
+model SendAttempt {
+  id            String        @id @default(uuid())
+  recipientId   String
+  smtpAccountId String
+  providerMsgId String?
+  result        AttemptResult
+  responseRaw   String?
+  latencyMs     Int?
+  createdAt     DateTime      @default(now())
+  recipient     Recipient     @relation(fields: [recipientId], references: [id])
+}
+
+model InboundMessage {
+  id           String   @id @default(uuid())
+  orgId        String
+  replyToToken String?
+  fromEmail    String
+  toEmail      String
+  subject      String?
+  bodyText     String?
+  bodyHtml     String?
+  rawSource    Bytes?
+  receivedAt   DateTime
+}
+
+model MxCache {
+  domain       String   @id
+  recordsJson  Json
+  providerHint String
+  resolvedAt   DateTime
+  ttlUntil     DateTime
+}
+
+model SuppressedRecipient {
+  orgId     String
+  email     String
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@id([orgId, email])
+}
+
+model OrgSettings {
+  orgId                  String  @id
+  killSwitch             Boolean @default(false)
+  rateLimitPerMin        Int     @default(300)
+  rateLimitPerDay        Int     @default(10000)
+  retentionDaysRawSource Int     @default(60)
+  listUnsubscribeEnabled Boolean @default(true)
+  org                    Org     @relation(fields: [orgId], references: [id])
+}
+
+model DomainConfig {
+  id                  String       @id @default(uuid())
+  orgId               String
+  domain              String       @unique
+  dkimSelectorCurrent String?
+  dkimSelectorNext    String?
+  dkimRotateAt        DateTime?
+  dmarcPolicy         DmarcPolicy  @default(none)
+  dmarcPct            Int          @default(100)
+  aspf                AlignMode    @default(r)
+  adkim               AlignMode    @default(r)
+  ruaMailto           String?
+  ruaHttp             String?
+  rufMailto           String?
+  lastPublishedAt     DateTime?
+  dnsProvider         DnsProvider?
+  dnsZoneRef          String?
+  org                 Org          @relation(fields: [orgId], references: [id])
+}
+
+model DmarcAggregateReport {
+  id        String   @id @default(uuid())
+  orgId     String
+  domain    String
+  startDate DateTime
+  endDate   DateTime
+  source    String
+  total     Int
+  passDkim  Int
+  passSpf   Int
+  aligned   Int
+  failing   Int
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  orgId     String
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  ip        String?
+  userAgent String?
+  success   Boolean
+  createdAt DateTime @default(now())
+}
