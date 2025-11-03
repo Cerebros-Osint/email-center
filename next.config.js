@@ -63,6 +63,11 @@ const nextConfig = {
       },
     ];
   },
+  
+  // Force dynamic builds to prevent prerendering errors
+  generateBuildId: async () => {
+    return `build-${Date.now()}`;
+  },
 
   webpack: (config, { isServer }) => {
     if (isServer) {
