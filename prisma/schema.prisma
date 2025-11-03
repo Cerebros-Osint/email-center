@@ -1,71 +1,86 @@
-// Schema SQLite pour tests rapides - Sans ENUMs
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model Org {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users           OrgUser[]
-  settings        OrgSettings?
-  smtpAccounts    SmtpAccount[]
-  identities      Identity[]
-  messages        Message[]
-  domainConfigs   DomainConfig[]
-  suppressions    SuppressedRecipient[]
-  unsubscribes    Unsubscribe[]
-  inboundMessages InboundMessage[]
-  auditLogs       AuditLog[]
+enum OrgRole {
+  Owner
+  Admin
+  Member
 }
 
-model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+enum MessageStatus {
+  draft
+  queued
+  sent
+  failed
+  paused
+}
 
-  orgs      OrgUser[]
-  auditLogs AuditLog[]
+enum RecipientStatus {
+  pending
+  sent
+  failed
+  suppressed
+}
+
+enum AttemptResult {
+  ok
+  fail
+}
+
+enum DmarcPolicy {
+  none
+  quarantine
+  reject
+}
+
+enum AlignMode {
+  r
+  s
+}
+
+enum DnsProvider {
+  route53
+  cloudflare
+}
+
+model Org {
+  id            String         @id @default(uuid())
+  name          String
+  createdAt     DateTime       @default(now())
+  settings      OrgSettings?
+  users         OrgUser[]
+  smtpAccounts  SmtpAccount[]
+  identities    Identity[]
+  domainConfigs DomainConfig[]
 }
 
 model OrgUser {
-  orgId    String
-  userId   String
-  role     String // Owner, Admin, Member
-  joinedAt DateTime @default(now())
+  id     String  @id @default(uuid())
+  orgId  String
+  userId String
+  role   OrgRole
+  org    Org     @relation(fields: [orgId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
 
-  org  Org  @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([orgId, userId])
-  @@index([userId])
+  @@unique([orgId, userId])
 }
 
-model OrgSettings {
-  id                     String   @id @default(uuid())
-  orgId                  String   @unique
-  killSwitch             Boolean  @default(false)
-  rateLimitPerMin        Int?
-  rateLimitPerDay        Int?
-  retentionDaysRawSource Int?
-  listUnsubscribeEnabled Boolean  @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-
-  org Org @relation(fields: [orgId], references: [id], onDelete: Cascade)
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  orgs         OrgUser[]
 }
 
 model SmtpAccount {
-  id              String   @id @default(uuid())
+  id              String                  @id @default(uuid())
   orgId           String
   provider        String
   host            String
@@ -74,176 +89,71 @@ model SmtpAccount {
   passwordEnc     Bytes
   fromEmail       String
   rateLimitPerMin Int?
-  status          String   @default("active")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  org          Org                   @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  capabilities ProviderCapabilities?
-  identities   Identity[]
-  recipients   Recipient[]
-  sendAttempts SendAttempt[]
-
-  @@index([orgId])
-  @@index([status])
+  status          String                  @default("active")
+  createdAt       DateTime                @default(now())
+  org             Org                     @relation(fields: [orgId], references: [id])
+  capabilities    ProviderCapabilities?
 }
 
 model ProviderCapabilities {
-  id            String   @id @default(uuid())
-  smtpAccountId String   @unique
-  starttls      Boolean  @default(true)
+  id            String      @id @default(uuid())
+  smtpAccountId String      @unique
+  starttls      Boolean     @default(false)
   size          Int?
-  pipelining    Boolean  @default(false)
-  eightBitMime  Boolean  @default(false)
+  pipelining    Boolean     @default(false)
+  eightBitMime  Boolean     @default(false)
   latencyMs     Int?
-  lastTestAt    DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  smtpAccount SmtpAccount @relation(fields: [smtpAccountId], references: [id], onDelete: Cascade)
+  lastTestAt    DateTime
+  smtpAccount   SmtpAccount @relation(fields: [smtpAccountId], references: [id])
 }
 
 model Identity {
-  id                   String   @id @default(uuid())
+  id                   String  @id @default(uuid())
   orgId                String
   displayName          String
   fromEmail            String
-  defaultSmtpAccountId String
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  org                Org         @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  defaultSmtpAccount SmtpAccount @relation(fields: [defaultSmtpAccountId], references: [id])
-  messages           Message[]
-
-  @@index([orgId])
+  defaultSmtpAccountId String?
+  org                  Org     @relation(fields: [orgId], references: [id])
 }
 
 model Message {
-  id                String   @id @default(uuid())
-  orgId             String
-  identityId        String
-  subject           String
-  bodyHtml          String?
-  bodyText          String?
-  sendStatus        String   @default("draft") // draft, queued, sent, failed, paused
-  replyToToken      String?  @unique
-  customDisplayName String? // Identité personnalisée
-  customFromEmail   String? // Email personnalisé
-  trackingEnabled   Boolean  @default(true) // Tracking activé par défaut
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  org        Org         @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  identity   Identity    @relation(fields: [identityId], references: [id])
-  recipients Recipient[]
-
-  @@index([orgId])
-  @@index([sendStatus])
-  @@index([createdAt])
-  @@index([identityId])
-  @@index([orgId, createdAt])
+  id           String        @id @default(uuid())
+  orgId        String
+  userId       String
+  identityId   String
+  subject      String
+  bodyHtml     String?
+  bodyText     String?
+  replyToToken String
+  status       MessageStatus
+  createdAt    DateTime      @default(now())
+  recipients   Recipient[]
 }
 
 model Recipient {
-  id                 String    @id @default(uuid())
+  id                 String          @id @default(uuid())
   messageId          String
   toEmail            String
-  sendStatus         String    @default("pending") // pending, sent, failed, suppressed
   mxDomain           String?
-  mxRecordsJson      String?
+  mxRecordsJson      Json?
   lastMxCheckedAt    DateTime?
   routeSmtpAccountId String?
+  sendStatus         RecipientStatus @default(pending)
   sentAt             DateTime?
-  trackingId         String?   @unique // ID unique pour tracking
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  message        Message         @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  smtpAccount    SmtpAccount?    @relation(fields: [routeSmtpAccountId], references: [id])
-  sendAttempts   SendAttempt[]
-  trackingEvents TrackingEvent[]
-
-  @@index([messageId])
-  @@index([sendStatus])
-  @@index([mxDomain])
-  @@index([trackingId])
-  @@index([toEmail])
-  @@index([routeSmtpAccountId])
-  @@index([sendStatus, createdAt])
+  message            Message         @relation(fields: [messageId], references: [id])
+  attempts           SendAttempt[]
 }
 
 model SendAttempt {
-  id            String   @id @default(uuid())
+  id            String        @id @default(uuid())
   recipientId   String
   smtpAccountId String
   providerMsgId String?
-  result        String // ok, fail
+  result        AttemptResult
   responseRaw   String?
-  latencyMs     Int
-  createdAt     DateTime @default(now())
-
-  recipient   Recipient   @relation(fields: [recipientId], references: [id], onDelete: Cascade)
-  smtpAccount SmtpAccount @relation(fields: [smtpAccountId], references: [id])
-
-  @@index([recipientId])
-  @@index([result])
-  @@index([createdAt])
-  @@index([smtpAccountId, createdAt])
-  @@index([recipientId, smtpAccountId])
-  @@index([result, createdAt])
-}
-
-model DomainConfig {
-  id                  String    @id @default(uuid())
-  orgId               String
-  domain              String
-  dkimSelectorCurrent String?
-  dkimSelectorNext    String?
-  dkimRotateAt        DateTime?
-  dmarcPolicy         String    @default("none") // none, quarantine, reject
-  dmarcPct            Int       @default(100)
-  aspf                String    @default("r") // r, s
-  adkim               String    @default("r") // r, s
-  ruaMailto           String?
-  lastDmarcAdjustedAt DateTime?
-  lastDnsCheckAt      DateTime?
-  dnsProvider         String? // route53, cloudflare
-  dnsProviderZoneId   String?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  org Org @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  @@unique([orgId, domain])
-  @@index([domain])
-}
-
-model SuppressedRecipient {
-  id        String   @id @default(uuid())
-  orgId     String
-  email     String
-  reason    String
-  createdAt DateTime @default(now())
-
-  org Org @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  @@unique([orgId, email])
-  @@index([email])
-}
-
-model Unsubscribe {
-  id        String   @id @default(uuid())
-  orgId     String
-  email     String
-  token     String   @unique
-  method    String
-  createdAt DateTime @default(now())
-
-  org Org @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  @@unique([orgId, email])
-  @@index([email])
+  latencyMs     Int?
+  createdAt     DateTime      @default(now())
+  recipient     Recipient     @relation(fields: [recipientId], references: [id])
 }
 
 model InboundMessage {
@@ -252,22 +162,73 @@ model InboundMessage {
   replyToToken String?
   fromEmail    String
   toEmail      String
-  subject      String
+  subject      String?
   bodyText     String?
   bodyHtml     String?
-  rawSource    String?
-  threadId     String?
+  rawSource    Bytes?
   receivedAt   DateTime
-  createdAt    DateTime @default(now())
+}
 
-  org Org @relation(fields: [orgId], references: [id], onDelete: Cascade)
+model MxCache {
+  domain       String   @id
+  recordsJson  Json
+  providerHint String
+  resolvedAt   DateTime
+  ttlUntil     DateTime
+}
 
-  @@index([orgId])
-  @@index([replyToToken])
-  @@index([threadId])
-  @@index([fromEmail])
-  @@index([receivedAt])
-  @@index([orgId, receivedAt])
+model SuppressedRecipient {
+  orgId     String
+  email     String
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@id([orgId, email])
+}
+
+model OrgSettings {
+  orgId                  String  @id
+  killSwitch             Boolean @default(false)
+  rateLimitPerMin        Int     @default(300)
+  rateLimitPerDay        Int     @default(10000)
+  retentionDaysRawSource Int     @default(60)
+  listUnsubscribeEnabled Boolean @default(true)
+  org                    Org     @relation(fields: [orgId], references: [id])
+}
+
+model DomainConfig {
+  id                  String       @id @default(uuid())
+  orgId               String
+  domain              String       @unique
+  dkimSelectorCurrent String?
+  dkimSelectorNext    String?
+  dkimRotateAt        DateTime?
+  dmarcPolicy         DmarcPolicy  @default(none)
+  dmarcPct            Int          @default(100)
+  aspf                AlignMode    @default(r)
+  adkim               AlignMode    @default(r)
+  ruaMailto           String?
+  ruaHttp             String?
+  rufMailto           String?
+  lastPublishedAt     DateTime?
+  dnsProvider         DnsProvider?
+  dnsZoneRef          String?
+  org                 Org          @relation(fields: [orgId], references: [id])
+}
+
+model DmarcAggregateReport {
+  id        String   @id @default(uuid())
+  orgId     String
+  domain    String
+  startDate DateTime
+  endDate   DateTime
+  source    String
+  total     Int
+  passDkim  Int
+  passSpf   Int
+  aligned   Int
+  failing   Int
+  createdAt DateTime @default(now())
 }
 
 model AuditLog {
@@ -275,31 +236,10 @@ model AuditLog {
   orgId     String
   userId    String?
   action    String
-  resource  String
-  details   String?
+  entity    String
+  entityId  String?
+  ip        String?
+  userAgent String?
+  success   Boolean
   createdAt DateTime @default(now())
-
-  org  Org   @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  user User? @relation(fields: [userId], references: [id])
-
-  @@index([orgId])
-  @@index([action])
-  @@index([createdAt])
-}
-
-model TrackingEvent {
-  id          String   @id @default(uuid())
-  recipientId String
-  eventType   String // opened, clicked, bounced, unsubscribed
-  userAgent   String?
-  ipAddress   String?
-  location    String?
-  metadata    String? // JSON metadata
-  createdAt   DateTime @default(now())
-
-  recipient Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
-
-  @@index([recipientId])
-  @@index([eventType])
-  @@index([createdAt])
 }
