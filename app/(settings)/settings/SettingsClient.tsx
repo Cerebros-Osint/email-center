@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { SmtpAccount, Identity, OrgSettings } from '@/types';
+import type { SmtpAccount, Identity, OrgSettings, OrgRole } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 

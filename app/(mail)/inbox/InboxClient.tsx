@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { InboundMessage } from '@/types';
+import type { InboundMessage } from '@prisma/client';
 import { sanitizeEmailHtml } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';

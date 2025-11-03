@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Message, Recipient } from '@/types';
+import type { Message, Recipient } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Identity } from '@/types';
+import type { Identity } from '@prisma/client';
 
 interface PreflightResult {
   canSend: boolean;
