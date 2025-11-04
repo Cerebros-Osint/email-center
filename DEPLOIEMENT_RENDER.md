@@ -4,6 +4,83 @@ Ce guide vous accompagne étape par étape pour déployer **Email Software Compl
 
 ---
 
+## ⚠️ IMPORTANT: Déploiement via Blueprint
+
+L'application est configurée pour être déployée via un **Render Blueprint**. Cela crée automatiquement:
+- ✅ Web Service (Next.js)
+- ✅ Worker Service (BullMQ)
+- ✅ PostgreSQL Database
+- ✅ Redis Cache
+
+---
+
+## 🎯 Méthode 1: Déploiement via Blueprint (RECOMMANDÉ)
+
+### Étape 1: Supprimer le Service Actuel
+
+Si vous avez déjà créé un service manuellement:
+1. Dashboard Render → Cliquer sur `email-software-web`
+2. Settings (⚙️) → Scroll tout en bas
+3. **Delete Web Service**
+
+### Étape 2: Déployer via Blueprint
+
+1. **Dashboard Render** → https://dashboard.render.com
+2. Cliquer **"New +"** → **"Blueprint"**
+3. Connecter votre repo GitHub: `Cerebros-Osint/email-center`
+4. Render détectera automatiquement `render.yaml`
+5. Nommer le Blueprint: `email-software`
+6. Cliquer **"Apply"**
+
+### Étape 3: Attendre la Création
+
+Render va créer automatiquement:
+- ✅ `email-software-db` (PostgreSQL)
+- ✅ `email-software-redis` (Redis)
+- ✅ `email-software-web` (Web Service)
+- ✅ `email-software-workers` (Worker Service)
+
+**Temps estimé:** 10-15 minutes
+
+### Étape 4: Configurer les Variables Manquantes
+
+Une fois le Blueprint appliqué, aller dans **email-software-web** → Environment:
+
+Variables à ajouter:
+```bash
+NEXT_PUBLIC_APP_URL=https://votre-url-render.onrender.com
+IMAP_HOST=votre-serveur-imap.com
+IMAP_USER=votre@email.com
+IMAP_PASS=votre-mot-de-passe
+REPLY_DOMAIN=votre-domaine.com
+```
+
+### Étape 5: Initialiser la Base de Données
+
+Une fois déployé:
+1. Dashboard → `email-software-web` → **Shell** (bouton en haut)
+2. Exécuter:
+```bash
+npx prisma db push
+npm run db:seed
+```
+
+### Étape 6: Accéder à l'Application
+
+URL: `https://email-software-web-XXXX.onrender.com`
+
+Login:
+- Email: `admin@acme.com`
+- Password: `Pass456@`
+
+---
+
+## 🛠️ Méthode 2: Configuration Manuelle (Si Blueprint ne fonctionne pas)
+
+Ce guide vous accompagne étape par étape pour déployer **Email Software Complet** sur Render.com avec PostgreSQL et Redis.
+
+---
+
 ## 📋 Table des Matières
 
 1. [Prérequis](#prérequis)
