@@ -7,6 +7,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  
+  // During CI build, allow prerender failures
+  staticPageGenerationTimeout: process.env.CI === 'true' ? 10 : 60,
   // Skip static generation during build to avoid DB/Redis connection errors
   output: 'standalone',
   // Disable static optimization completely during build
