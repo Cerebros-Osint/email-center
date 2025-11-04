@@ -8,7 +8,7 @@ services:
     env: node
     region: oregon
     plan: starter
-    buildCommand: npm install && npx prisma generate && CI=true SKIP_ENV_VALIDATION=true npm run build
+    buildCommand: cp .env.build .env && npm install && npx prisma generate && CI=true SKIP_ENV_VALIDATION=true DATABASE_URL=postgresql://localhost:5432/build npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV

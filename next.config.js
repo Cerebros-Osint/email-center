@@ -9,12 +9,16 @@ const nextConfig = {
   },
   // Skip static generation during build to avoid DB/Redis connection errors
   output: 'standalone',
+  // Disable static optimization completely during build
+  skipTrailingSlashRedirect: true,
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
     serverActions: {
       bodySizeLimit: '10mb',
     },
   },
+  // Prevent prerendering of error pages
+  generateBuildId: async () => 'build-' + Date.now(),
   
   // Security headers
   async headers() {
@@ -69,15 +73,6 @@ const nextConfig = {
     ];
   },
   
-  // Force dynamic builds to prevent prerendering errors
-  generateBuildId: async () => {
-    return `build-${Date.now()}`;
-  },
-  
-  // Disable static optimization for error pages during build
-  async rewrites() {
-    return [];
-  },
 
   webpack: (config, { isServer }) => {
     if (isServer) {
