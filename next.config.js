@@ -20,6 +20,14 @@ const nextConfig = {
   // Prevent prerendering of error pages
   generateBuildId: async () => 'build-' + Date.now(),
   
+  // Skip ALL static optimization during build
+  ...(process.env.CI === 'true' && {
+    experimental: {
+      ...nextConfig.experimental,
+      isrMemoryCacheSize: 0,
+    },
+  }),
+  
   // Security headers
   async headers() {
     return [
