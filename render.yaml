@@ -8,7 +8,7 @@ services:
     env: node
     region: oregon
     plan: starter
-    buildCommand: npm install && bash build-render.sh
+    buildCommand: npm install && DATABASE_URL=postgresql://localhost:5432/build REDIS_URL=redis://localhost:6379 CI=true SKIP_ENV_VALIDATION=true npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
