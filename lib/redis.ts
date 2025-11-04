@@ -30,7 +30,12 @@ type RedisStub = {
 // Redis client for general use (either real client or a stub)
 export let redis: IORedisClient | RedisStub;
 
-if (redisUrl && process.env.NODE_ENV !== 'test') {
+// Skip Redis connection during build phase
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || 
+                     process.env.BUILD_ID || 
+                     process.env.CI === 'true';
+
+if (redisUrl && process.env.NODE_ENV !== 'test' && !isBuildPhase) {
   try {
     // Production: enable retry strategy for resilience
     const retryStrategy = process.env.NODE_ENV === 'production'
@@ -44,7 +49,7 @@ if (redisUrl && process.env.NODE_ENV !== 'test') {
       ...redisTlsOptions,
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
-      lazyConnect: false, // Connect immediately to fail-fast in production
+      lazyConnect: true, // Lazy connect to avoid errors during build
       retryStrategy,
     }) as IORedisClient;
 

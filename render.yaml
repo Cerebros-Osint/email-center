@@ -8,11 +8,13 @@ services:
     env: node
     region: oregon
     plan: starter
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm install && npx prisma generate && CI=true SKIP_ENV_VALIDATION=true npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
+      - key: SKIP_ENV_VALIDATION
+        value: "true"
       - key: DATABASE_URL
         fromDatabase:
           name: email-software-db
@@ -52,6 +54,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: SKIP_ENV_VALIDATION
+        value: "true"
       - key: DATABASE_URL
         fromDatabase:
           name: email-software-db
