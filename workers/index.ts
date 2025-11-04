@@ -47,7 +47,7 @@ async function scheduleRecurringJobs() {
       logger.info('✓ IMAP poll job scheduled (every 2 minutes)');
     }
   } catch (error) {
-    logger.error('Failed to schedule recurring jobs:', error);
+    logger.error({ error }, 'Failed to schedule recurring jobs');
     throw error;
   }
 }
@@ -95,19 +95,19 @@ async function gracefulShutdown() {
     logger.info('✓ All workers shut down gracefully');
     process.exit(0);
   } catch (error) {
-    logger.error('Error during shutdown:', error);
+    logger.error({ error }, 'Error during shutdown');
     process.exit(1);
   }
 }
 
 // Handle uncaught exceptions and unhandled rejections
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception:', error);
+  logger.error({ error }, 'Uncaught Exception');
   gracefulShutdown();
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error({ promise, reason }, 'Unhandled Rejection');
   gracefulShutdown();
 });
 
@@ -132,7 +132,7 @@ async function startWorkers() {
     logger.info('  - DMARC Adjust Worker (concurrency: 2)');
     logger.info('  - DKIM Rotate Worker (concurrency: 2)');
   } catch (error) {
-    logger.error('Failed to start workers:', error);
+    logger.error({ error }, 'Failed to start workers');
     process.exit(1);
   }
 }

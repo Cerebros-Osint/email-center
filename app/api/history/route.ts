@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { RecipientStatus } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   const authResult = await requireAuth(request);
@@ -18,9 +19,9 @@ export async function GET(request: NextRequest) {
     const where: { orgId: string } = { orgId: session.orgId };
 
     // Build filter
-    const recipientWhere: { sendStatus?: string } = {};
-    if (status) {
-      recipientWhere.sendStatus = status;
+    const recipientWhere: { sendStatus?: RecipientStatus } = {};
+    if (status && Object.values(RecipientStatus).includes(status as RecipientStatus)) {
+      recipientWhere.sendStatus = status as RecipientStatus;
     }
     
     // Get messages with recipients
@@ -36,14 +37,9 @@ export async function GET(request: NextRequest) {
         recipients: {
           where: recipientWhere,
           include: {
-            sendAttempts: {
+            attempts: {
               orderBy: { createdAt: 'desc' },
               take: 1,
-            },
-            smtpAccount: {
-              select: {
-                provider: true,
-              },
             },
           },
         },

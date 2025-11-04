@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        eventAt: 'desc',
       },
       take: limit,
     });
@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
         recipientEmail: event.recipient.toEmail,
         messageSubject: event.recipient.message.subject,
         userAgent: event.userAgent,
-        ipAddress: event.ipAddress,
-        createdAt: event.createdAt,
+        ipAddress: event.ip,
+        createdAt: event.eventAt,
       })),
       ...failedAttempts.map(attempt => ({
         id: attempt.id,

@@ -55,7 +55,7 @@ export async function GET(
       where: {
         recipientId: recipient.id,
         eventType: 'opened',
-        createdAt: {
+        eventAt: {
           gte: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes
         },
       },
@@ -68,7 +68,7 @@ export async function GET(
           recipientId: recipient.id,
           eventType: 'opened',
           userAgent: userAgent.substring(0, 500),
-          ipAddress: ipAddress.substring(0, 100),
+          ip: ipAddress.substring(0, 100),
           metadata: JSON.stringify({
             referer: request.headers.get('referer') || '',
             acceptLanguage: request.headers.get('accept-language') || '',

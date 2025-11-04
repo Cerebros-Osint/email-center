@@ -47,13 +47,14 @@ export async function POST(request: NextRequest) {
       const message = await tx.message.create({
         data: {
           orgId: session.orgId,
+          userId: session.userId,
           identityId: validationResult.data.identityId,
           subject: validationResult.data.subject,
           bodyHtml: validationResult.data.bodyHtml || '',
           bodyText: validationResult.data.bodyText || '',
           customDisplayName: validationResult.data.customDisplayName,
-          customFromEmail: validationResult.data.customFromEmail,
           trackingEnabled: validationResult.data.trackingEnabled !== false,
+          status: 'draft',
           replyToToken,
         },
       });

@@ -1,0 +1,68 @@
+# Files to ignore during Render deploy (optimize build)
+
+# Documentation (not needed in production)
+*.md
+!README.md
+AUDIT*.md
+BUGS*.md
+CORRECTIONS*.md
+DEMARRAGE*.md
+DEPLOIEMENT*.md
+ETAT*.md
+FINALISATION*.md
+GUIDE*.md
+INSTALLATION*.md
+INTERFACE*.md
+LISTE*.md
+MVP*.md
+NOUVELLES*.md
+OPTIONS*.md
+POSTGRES*.md
+QUICKSTART*.md
+RAPPORT*.md
+RECAP*.md
+RECAPITULATIF*.md
+RESUME*.md
+REVISION*.md
+REVUE*.md
+SUMMARY*.md
+SYSTEME*.md
+TEST*.md
+TESTS*.md
+VERIFICATION*.md
+
+# PowerShell scripts (Windows only)
+*.ps1
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files
+tests/
+test-results/
+playwright-report/
+coverage/
+
+# Build artifacts (will be rebuilt)
+.next/
+tsconfig.tsbuildinfo
+build-output.txt
+type-errors.log
+type-errors.txt
+
+# Temporary files
+temp_routes.txt
+
+# Local databases
+*.db
+*.db-journal
+prisma/*.db
+dev.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*

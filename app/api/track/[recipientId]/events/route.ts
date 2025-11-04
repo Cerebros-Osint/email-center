@@ -29,7 +29,7 @@ export async function GET(
       },
       include: {
         trackingEvents: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { eventAt: 'desc' },
         },
         message: {
           select: {
@@ -64,17 +64,16 @@ export async function GET(
       stats: {
         opens,
         clicks,
-        firstOpenedAt: firstOpen?.createdAt,
-        lastOpenedAt: lastOpen?.createdAt,
+        firstOpenedAt: firstOpen?.eventAt,
+        lastOpenedAt: lastOpen?.eventAt,
       },
       events: recipient.trackingEvents.map(event => ({
         id: event.id,
         eventType: event.eventType,
         userAgent: event.userAgent,
-        ipAddress: event.ipAddress,
-        location: event.location,
+        ipAddress: event.ip,
         metadata: event.metadata ? JSON.parse(event.metadata) : null,
-        createdAt: event.createdAt,
+        createdAt: event.eventAt,
       })),
     });
   } catch (error: unknown) {
